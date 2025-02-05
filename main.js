@@ -84,7 +84,13 @@ app.post('/comment', upload.single('file'), async (req, res, next) => {
         { nouse : 1},
         { where: { id: req.body.id } }
     )
-    if(filename) generateThumbnail(filename)
+    if(filename){
+        if(video){
+            generateVideoThumbnail(filename)
+        }else{
+            generateThumbnail(filename)
+        }
+    }
     if(createdThread){
         return res.status(200).json({message : "comment created."})
     }
