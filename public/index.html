@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<head>
+    <title>ChadChan</title>
+    <meta charset="UTF-8">
+    <meta name="keywords" content="Chad, chadchan, chad imageboard, bharat chan, bharatchan">
+    <meta name="description" content="Imageboard for the chads, by a chad">
+    <meta name="author" content="Chad">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        *{
+            font-family  :'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            background-color: rgb(240, 252, 221);
+        }
+
+        .thread {
+            border: 1px solid orange;
+            height: 240px;
+            width: 160px;
+            padding: 8px;
+        }
+
+        .comment {
+            border: 1px solid orange;
+            width: 90%;
+            padding: 8px;
+        }
+
+        .thread > p {
+            font-size: 14px;
+        }
+
+        #threadBox{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .hide {
+            display: none;
+        }
+
+        .show{
+            display: block;
+        }
+
+        h1{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bottomlock{
+            position: fixed;
+            bottom: 0;
+            z-index: 2;
+        }
+    </style>
+</head>
+
+
+<body>
+    
+    <h1><img src="pyaari.jpg" width="100" alt="pyaari"/>CHADCHAN</h1>
+
+    <div id="forthread" class="show bottomlock">
+    <textarea rows="3" cols="25" id="threadmessage" ></textarea>
+    <input type="file" />
+    <button id="createthread">Post</button>
+    </div>
+
+    <div id="forcomment" class="hide bottomlock">
+        <textarea rows="4" cols="30" id="commentmessage"></textarea>
+        <input type="file" id="commentfile" />
+        <button id="createcomment">Reply</button>
+        <br><br>
+        <button id="back">Go back</button>
+    </div>
+
+    <div id="main">
+        <div id="threadBox"></div>
+    </div>
+    
+    <br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+    <script>
+        globalThreadId = null
+        const threadform = document.getElementById('forthread')
+        const commentform = document.getElementById('forcomment')
+
+        generateAllThreads()
+
+        async function generateAllThreads() {
+            try {
+                let data = await getAllThreads()
+                data = await data.json()
+                renderAllThreads(data)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        //fetch all threads and return a promise
+        function getAllThreads() {
+            return fetch('/thread', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+        }
+
+        //create elements and append them to dom
+        function renderAllThreads(data) {
+            wipe()
+            const listContainer = document.getElementById('threadBox');
+            data.forEach(item => {
+                const container = document.createElement('div');
+                const id = document.createElement('p')
+                const text = document.createElement('p')
+                const date = document.createElement('p')
+                const img = document.createElement('img')
+
+                id.textContent = ">>"+item.id
+                text.textContent = item.comment.slice(0,120);
+                date.textContent = new Date(item.createdAt).toLocaleString()
+                if(item.isvideo){
+                    img.setAttribute('src', 'thumbnails/thumbnail-'+item.image+'.jpeg')
+                }else{
+                    img.setAttribute('src', 'thumbnails/thumbnail-'+item.image)
+                }
+                img.setAttribute('height', '60px')
+                img.setAttribute('width', '160px')
+                container.appendChild(id)
+                if(item.image){
+                    container.appendChild(img)
+                }  
+                container.appendChild(text)
+                container.appendChild(date)
+                container.classList.add('thread')
+                listContainer.appendChild(container)
+                container.addEventListener('click', () => {
+                    globalThreadId = item.id
+                    generateThreadWithComments(item.id)
+                })
+            });
+        }
+
+        function goTo(where){
+            if(where == 'thread'){    
+                threadform.classList.remove('hide')
+                threadform.classList.add('show')
+                commentform.classList.remove('show')
+                commentform.classList.add('hide')
+            }else{
+                //hide thread form and show comment form
+                threadform.classList.remove('show')
+                threadform.classList.add('hide')
+                commentform.classList.remove('hide')
+                commentform.classList.add('show')
+            }
+        }
+
+        async function generateThreadWithComments(threadId){
+            try{
+                //get data
+                let data = await getAllComments(threadId)
+                data = await data.json()
+                goTo('comment')
+                //render thread and its comments
+                renderThreadWithComments(data)
+            }catch(error){
+                console.log(error)
+            }
+        }
+
+        function wipe(){
+            //remove threadbox
+            document.getElementById('threadBox').remove()
+            const main = document.getElementById('main')
+            let threadbox = document.createElement('div')
+            threadbox.setAttribute('id','threadBox')
+            main.appendChild(threadbox)
+        }
+
+        //create elements and append them to dom
+        function renderThreadWithComments(data) {
+            let imageopen = false
+            wipe()
+            const listContainer = document.getElementById('threadBox');
+            data.forEach(item => {
+                const container = document.createElement('div');
+                const id = document.createElement('p')
+                const text = document.createElement('p')
+                const date = document.createElement('p')
+                const img = document.createElement('img')
+                const replybutton = document.createElement('button')
+
+                id.textContent = ">>"+item.id
+                text.textContent = item.comment.slice(0,150);
+                date.textContent = new Date(item.createdAt).toLocaleString()
+                if(item.isvideo){
+                    img.setAttribute('src', 'thumbnails/thumbnail-'+item.image+'.jpeg')
+                    img.addEventListener('click', () => {
+                        let v = document.createElement('video')
+                        v.setAttribute('src', 'files/'+item.image)
+                        v.setAttribute('height' , '200')
+                        v.setAttribute('width', '200')
+                        v.setAttribute('controls' , 'true')
+                        img.remove()
+                        container.prepend(v)
+                    })
+                }else{
+                    img.setAttribute('src', 'thumbnails/thumbnail-'+item.image)
+                    img.addEventListener('click', () => {imageopen = !imageopen; img.setAttribute('src', imageopen ? 'files/'+item.image : 'thumbnails/thumbnail-'+item.image)})
+                }
+                replybutton.textContent = 'reply'
+                replybutton.addEventListener('click', () => {
+                    let id = item.id
+                    document.getElementById('commentmessage').value += `>>${id}\n`
+                })
+
+                container.appendChild(id)
+                if(item.image){
+                    container.appendChild(img)
+                }  
+                container.appendChild(text)
+                container.appendChild(date)
+                container.appendChild(replybutton)
+
+                container.classList.add('comment')
+
+                listContainer.appendChild(container)
+            });
+        }
+
+        //fetch all comments and return a promise
+        function getAllComments(threadId) {
+            return fetch('/comment/'+ threadId, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+        }
+
+        document.getElementById("createthread").addEventListener("click", () => {
+            let threadData = document.getElementById("threadmessage").value.trim()
+            if (threadData.length == 0) {
+                alert('Incel spotted.')
+                return
+            }
+            const formData = new FormData();
+            formData.append('message', threadData);
+            const fileInput = document.querySelector('input[type="file"]');
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/thread', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(res => {generateAllThreads(); document.getElementById("threadmessage").value = ''})
+                .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById("createcomment").addEventListener("click", () => {
+            let threadData = document.getElementById("commentmessage").value.trim()
+            if (threadData.length == 0) {
+                alert('Incel spotted.')
+                return
+            }
+            // let data = {
+            //     message: threadData
+            // }
+            const formData = new FormData();
+            formData.append('message', threadData);
+            formData.append('id', globalThreadId);
+            const fileInput = document.getElementById('commentfile')
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/comment', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(res => {generateThreadWithComments(globalThreadId); document.getElementById("commentmessage").value = ''})
+                .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById('back').addEventListener('click', () => {
+            goTo('thread')
+            generateAllThreads()
+        })
+    </script>
+</body>
+
+</html>
