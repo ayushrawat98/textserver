@@ -1,7 +1,7 @@
 const ffmpeg = require('fluent-ffmpeg');
 
 function generateVideoThumbnail(path) {
-  // ffmpeg.setFfmpegPath('C:\\Users\\aayus\\Downloads\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe')
+  // ffmpeg.setFfmpegPath('C:\\Users\\dayush\\Downloads\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe')
   // Generate the thumbnail
   ffmpeg(`public/files/${path}`)
   .screenshots({

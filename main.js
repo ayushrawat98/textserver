@@ -22,7 +22,6 @@ app.use(express.json())
 
 //DB
 sync()
-// createadmin()
 
 app.get('/thread', async (req, res, next) => {
     let createdThreads = await comment.findAll({

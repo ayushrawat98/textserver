@@ -15,18 +15,10 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    // let extension = ''
-    // if(file.mimetype === 'video/mp4'){
-    //     extension = '.mp4'
-    // }else if(file.mimetype ===  'video/webm'){
-    //     extension = '.webm'
-    // }
-    // console.log('here',req.file,file)
       cb(null, uniqueSuffix + "-" + file.originalname)
     }
   })
 
-// const upload = multer({dest : 'public/videos', limits : {fileSize : 5242880}})
 
 const upload = multer({storage : storage, limits : {fileSize : 31*1024*1024}, fileFilter : filefilter})
 // const upload = multer({storage : storage, limits : {fileSize : 30*1024*1024}})
